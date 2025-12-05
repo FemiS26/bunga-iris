@@ -1,36 +1,29 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-from prediction import predict
+from prediction import prepare_input, predict
 
-st.title('Classifying Iris Flowers')
+st.title("Ad Match Predictor - Universal Model")
 
-st.markdown(
-    'Toy model to play to classify iris flowers into '
-    '(setosa, versicolor, virginica) based on their sepal/petal '
-    'and length/width.'
-)
+user_gender = st.selectbox("User Gender", ["Male","Female"])
+age_group = st.selectbox("Age Group", ["18-24","25-34","35-44","45-54","55+"])
+ad_platform = st.selectbox("Ad Platform", ["Facebook","Instagram","TikTok","Google"])
+target_gender = st.selectbox("Target Gender", ["Male","Female","All"])
+target_age_group = st.selectbox("Target Age Group", ["18-24","25-34","35-44","45-54","55+","All"])
+ad_type = st.selectbox("Ad Type", ["Image","Video","Carousel","Story"])
+time_of_day = st.selectbox("Time of Day", ["Morning","Afternoon","Evening","Night"])
+event_type = st.selectbox("Event Type", ["Impression","View","Like","Click"])
 
-st.header("Plant Features")
-col1, col2 = st.columns(2)
+if st.button("Predict"):
+    row = {
+        "user_gender": user_gender,
+        "age_group": age_group,
+        "ad_platform": ad_platform,
+        "gender_match": 1 if user_gender == target_gender or target_gender == "All" else 0,
+        "age_match": 1 if age_group == target_age_group or target_age_group == "All" else 0,
+        "hour": {"Morning":1,"Afternoon":2,"Evening":3,"Night":4}[time_of_day],
+        "ad_type": ad_type,
+        "interaction_score": {"Impression":1,"View":2,"Like":3,"Click":4}[event_type]
+    }
 
-with col1:
-    st.text("Sepal characteristics")
-    sepal_l = st.slider('Sepal length (cm)', 1.0, 8.0, 0.5)
-    sepal_w = st.slider('Sepal width (cm)', 2.0, 4.4, 0.5)
-
-with col2:
-    st.text("Petal characteristics")
-    petal_l = st.slider('Petal length (cm)', 1.0, 7.0, 0.5)
-    petal_w = st.slider('Petal width (cm)', 0.1, 2.5, 0.5)
-
-st.text('')
-
-if st.button("Predict type of Iris"):
-    result = predict(
-        np.array([[sepal_l, sepal_w, petal_l, petal_w]])
-    )
-    st.text(result[0])
-
-st.text('')
-st.markdown('')
+    df = prepare_input(row)
+    result = predict(df)[0]
+    st.success(f"Prediction: {result}")
